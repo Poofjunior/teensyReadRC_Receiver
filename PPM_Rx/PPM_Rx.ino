@@ -1,20 +1,16 @@
 /*
- * Test code for reading a 6-channel rc receiver 
+ * Test code for reading a PPM receiver
  *
  * \note The Teensy 3.1 supports 5V input signals and can be plugged
  *       directly into a receiver. 
  */
 
-/**
- * \brief Conditional Compilation Statements
- */
-#define DEFAULT_HIGH 1  /// Default PPM pin status while idle
-#define ULONG_MAX 0xffffffff
 
 /**
  * \brief parameters
  */
-#define STANDBY_TIME_THRESHOLD  4000
+#define IDLE_TIME_THRESHOLD  4000
+#define ULONG_MAX 0xffffffff
 
 
 /** 
@@ -41,6 +37,7 @@ void initPPM_RX();
 void startInitialTimer();
 void startTimer();
 void stopTimer();
+void prettyPrintAll();
 void prettyPrintChannel(unsigned int channel);
 void setup();
 void loop();
@@ -48,32 +45,19 @@ void loop();
 
 void setup()
 {
-    pinMode(PPM_CHANNEL, INPUT);
     Serial.begin(115200);   // baud rate is irrelevant for Teensy
-
     delay(2000);
-    Serial.println(" PPM Receiver test");
 
     initPPM_RX();
 }
 
 /**
- * \brief prints the raw channel data microsecond count
+ * \brief PrettyPrints the raw channel microsecond count
  */
 void loop()
 {
+    prettyPrintAll();
     delay(50);
-    Serial.println("PPM Values");
-    for (int i = 0; i < NUM_CHANNELS; ++i)
-    {
-        Serial.print("Ch");
-        Serial.print(i);
-        Serial.print(": ");
-        Serial.println(PPM_RX_Vals.channelTimes[i]);
-        prettyPrintChannel(i);
-        Serial.println();
-    }
-    Serial.println();
 }
 
 /**
@@ -81,6 +65,7 @@ void loop()
  */
 void initPPM_RX()
 {
+    pinMode(PPM_CHANNEL, INPUT);
     // Reset all channel values
     for (uint8_t channelIter= 0; channelIter < NUM_CHANNELS; ++channelIter)
     {
@@ -145,11 +130,26 @@ void stopTimer()
     ++PPM_RX_Vals.channelIndex;
 
     // Reset to channel if long delay detected in signal.
-    if (PPM_RX_Vals.diffTime > STANDBY_TIME_THRESHOLD)
+    if (PPM_RX_Vals.diffTime > IDLE_TIME_THRESHOLD)
         PPM_RX_Vals.channelIndex = 0;
 }
 
 
+void prettyPrintAll()
+{
+    Serial.println("PPM Values");
+    for (int i = 0; i < NUM_CHANNELS; ++i)
+    {
+        Serial.print("Ch");
+        Serial.print(i);
+        Serial.print(": ");
+        Serial.println(PPM_RX_Vals.channelTimes[i]);
+        prettyPrintChannel(i);
+        Serial.println();
+    }
+    Serial.println();
+
+}
 
 /*
  * \brief prints bars proportional to the raw microsecond count of
